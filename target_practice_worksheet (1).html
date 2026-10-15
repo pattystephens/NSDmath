@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Target Practice: Place Value</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F5EF;
+    --ink:#20242B;
+    --navy:#1D2B4F;
+    --outer:#2F8F6E;
+    --outer-soft:#E3F1EA;
+    --middle:#D98A2B;
+    --middle-soft:#FBEEDC;
+    --bull:#C4432F;
+    --bull-soft:#FBE7E2;
+    --gold:#E4B13B;
+    --line:#DEDAD0;
+    --card:#FFFFFF;
+    --shadow: 0 1px 2px rgba(32,36,43,0.04), 0 8px 24px -12px rgba(32,36,43,0.18);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Inter',sans-serif; line-height:1.5;
+    background-image: radial-gradient(circle at 1px 1px, rgba(32,36,43,0.05) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+  .display{font-family:'Baloo 2', sans-serif;}
+
+  /* ---------- Layout ---------- */
+  .wrap{
+    max-width:1180px; margin:0 auto; padding:28px 20px 100px;
+    display:grid; grid-template-columns: 1fr 300px; gap:28px;
+  }
+  @media (max-width: 900px){
+    .wrap{grid-template-columns:1fr; padding-bottom:150px;}
+    .scoreboard{
+      position:fixed; bottom:0; left:0; right:0; top:auto; width:100%;
+      border-radius:20px 20px 0 0; z-index:50; padding:14px 20px 16px; gap:10px;
+      box-shadow:0 -10px 30px rgba(0,0,0,0.18);
+    }
+    .hide-mobile{display:none !important;}
+    .score-display .num{font-size:32px;}
+  }
+
+  /* ---------- Header ---------- */
+  .masthead{
+    grid-column:1/-1; display:flex; align-items:flex-start; justify-content:space-between;
+    gap:20px; padding-bottom:14px; border-bottom:3px solid var(--ink); margin-bottom:6px; flex-wrap:wrap;
+  }
+  .masthead h1{
+    font-size:clamp(28px,4vw,42px); margin:6px 0 0; letter-spacing:0.2px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .badge-standard{
+    font-weight:600; font-size:12.5px; letter-spacing:0.4px; text-transform:uppercase;
+    color:var(--navy); background:#EDEAE0; padding:5px 10px; border-radius:6px; display:inline-block;
+  }
+  .name-date{display:flex; flex-direction:column; gap:10px; min-width:220px;}
+  .name-date label{font-size:11px; text-transform:uppercase; letter-spacing:0.6px; font-weight:700; color:#8A8577;}
+  .name-date input{
+    border:none; border-bottom:2px solid var(--line); background:transparent;
+    font-family:'Inter'; font-size:15px; padding:4px 2px; outline:none; color:var(--ink); width:100%;
+  }
+  .name-date input:focus{border-bottom-color:var(--navy);}
+
+  /* ---------- Rules ---------- */
+  .rules{
+    grid-column:1/-1; background:var(--navy); color:#F3F1EA; border-radius:16px;
+    padding:20px 24px; display:flex; gap:22px; align-items:center; flex-wrap:wrap; box-shadow:var(--shadow);
+  }
+  .rules .target-icon{flex-shrink:0;}
+  .rules-text{flex:1; min-width:240px;}
+  .rules-text .tag{
+    display:inline-block; background:var(--gold); color:#3A2B08; font-weight:700; font-size:12px;
+    text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:20px; margin-bottom:8px;
+  }
+  .rules-text p{margin:0 0 6px; font-size:14.5px; color:#D9D6C8;}
+  .rules-text p:last-child{margin-bottom:0;}
+  .rules-text strong{color:#fff;}
+  .rings-legend{display:flex; gap:10px; flex-wrap:wrap;}
+  .ring-chip{
+    display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.14); border-radius:10px; padding:8px 12px; font-size:13px;
+  }
+  .ring-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block;}
+  .ring-dot.outer{background:var(--outer);}
+  .ring-dot.middle{background:var(--middle);}
+  .ring-dot.bull{background:var(--bull);}
+
+  /* ---------- Tiers & questions ---------- */
+  .questions{display:flex; flex-direction:column; gap:22px;}
+  .tier{
+    background:var(--card); border-radius:16px; box-shadow:var(--shadow);
+    overflow:hidden; border:1px solid rgba(32,36,43,0.06);
+  }
+  .tier-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 22px; color:#fff; gap:12px; flex-wrap:wrap;
+  }
+  .tier-head h2{font-size:18px; margin:0;}
+  .tier-head .pts{
+    font-size:12.5px; background:rgba(255,255,255,0.22); padding:5px 10px;
+    border-radius:20px; font-weight:600; white-space:nowrap;
+  }
+  .tier.outer .tier-head{background:var(--outer);}
+  .tier.middle .tier-head{background:var(--middle);}
+  .tier.bull .tier-head{background:var(--bull);}
+  .tier-body{padding:6px 22px 18px;}
+
+  .question{padding:20px 0; border-bottom:1px dashed var(--line); scroll-margin-top:16px;}
+  .question:last-child{border-bottom:none;}
+
+  .qhead{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .qnum{
+    font-family:'Baloo 2'; font-weight:800; font-size:15px; color:#fff;
+    min-width:38px; height:28px; padding:0 8px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:14px;
+  }
+  .tier.outer .qnum{background:var(--outer);}
+  .tier.middle .qnum{background:var(--middle);}
+  .tier.bull .qnum{background:var(--bull);}
+  .qpts{font-size:12px; font-weight:700; color:#8A8577; text-transform:uppercase; letter-spacing:0.4px;}
+  .qstatus{
+    margin-left:auto; font-size:12px; font-weight:700; padding:4px 10px; border-radius:20px;
+    background:#EDEAE0; color:#6b6656;
+  }
+  .qstatus.correct{background:#DDF0E4; color:var(--outer);}
+  .qstatus.retry{background:var(--bull-soft); color:var(--bull);}
+  .qstatus.shown{background:#E8E6F2; color:#4a4a78;}
+
+  .qtext{font-size:15px;}
+  .qtext .given{
+    font-family:'JetBrains Mono'; font-weight:700; background:#F1EFE6;
+    padding:1px 6px; border-radius:5px; font-size:13.5px;
+  }
+  .qtext .quote{font-style:italic; color:#4a4438;}
+  ul.clues{margin:8px 0 0; padding-left:20px; font-size:14.5px;}
+  ul.clues li{margin-bottom:3px;}
+
+  .fields{display:grid; gap:12px; margin-top:12px;}
+  .field label.lab, .field .lab{
+    display:block; font-size:12px; font-weight:700; color:#6b6656;
+    text-transform:uppercase; letter-spacing:0.4px;
+  }
+  .field input[type="text"], .field textarea{
+    width:100%; margin-top:5px; border:1.5px dashed var(--line); border-radius:10px;
+    background:#FBFAF6; font-family:'Inter'; font-size:15px; padding:10px 12px;
+    outline:none; color:var(--ink); transition:border-color .15s, background .15s;
+  }
+  .field textarea{resize:vertical;}
+  .field input[type="text"]{height:44px;}
+  .field input[type="text"]:focus, .field textarea:focus{border-color:var(--navy); border-style:solid; background:#fff;}
+  .field input.ok, .field textarea.ok{border-color:var(--outer); border-style:solid; background:#F3FAF6;}
+  .field input.bad, .field textarea.bad{border-color:var(--bull); border-style:solid; background:#FEF6F4;}
+  .field input:disabled, .field textarea:disabled{opacity:0.75; cursor:not-allowed;}
+  .hint-line{font-size:12.5px; color:#8A8577; margin-top:4px;}
+
+  .inline-row{display:flex; gap:8px; align-items:flex-end;}
+  .inline-row .grow{flex:1;}
+  .sym{
+    width:44px; height:44px; border-radius:10px; border:1.5px solid var(--line); background:#fff;
+    font-family:'JetBrains Mono'; font-weight:700; font-size:18px; cursor:pointer; color:var(--navy);
+  }
+  .sym:hover{border-color:var(--navy);}
+  .sym:disabled{opacity:.4; cursor:not-allowed;}
+
+  .opts{display:grid; gap:8px; margin-top:6px;}
+  .opts.row{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));}
+  .opt{
+    display:flex; gap:10px; align-items:flex-start; border:1.5px solid var(--line); border-radius:10px;
+    padding:10px 12px; cursor:pointer; font-size:14.5px; background:#FBFAF6; transition:all .12s;
+  }
+  .opt:hover{border-color:var(--navy);}
+  .opt input{margin-top:3px; accent-color:var(--navy);}
+  .opt:has(input:checked){border-color:var(--navy); background:#EEF1F8;}
+  .opt:has(input:disabled){cursor:not-allowed; opacity:0.8;}
+
+  .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px;}
+  .btn{
+    border:none; border-radius:24px; padding:10px 20px; font-family:'Inter'; font-weight:700;
+    font-size:14px; cursor:pointer; transition:transform .1s, filter .15s;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-check{color:#fff;}
+  .tier.outer .btn-check{background:var(--outer);}
+  .tier.middle .btn-check{background:var(--middle);}
+  .tier.bull .btn-check{background:var(--bull);}
+  .btn-check:hover{filter:brightness(1.08);}
+  .btn-ghost{
+    background:none; border:1.5px solid var(--line); color:#6b6656; padding:8px 14px; font-size:12.5px;
+  }
+  .btn-ghost:hover{border-color:var(--navy); color:var(--navy);}
+  .btn-reveal{display:none;}
+  .btn-reveal.show{display:inline-block;}
+
+  .feedback{
+    display:none; margin-top:12px; border-radius:10px; padding:11px 14px; font-size:14px; line-height:1.55;
+  }
+  .feedback.good{display:block; background:#E3F1EA; border:1px solid #B5DCC9; color:#1c5a43;}
+  .feedback.bad{display:block; background:#FBE7E2; border:1px solid #F0BFB5; color:#7a2a1d;}
+  .feedback.info{display:block; background:#EEF1F8; border:1px solid #CBD3E6; color:var(--navy);}
+  .feedback ul{margin:6px 0 0; padding-left:0; list-style:none;}
+  .feedback li{margin:2px 0;}
+  .feedback .issue{margin-top:4px;}
+
+  .hint-box{
+    display:none; margin-top:10px; background:#FFF9EC; border:1px solid #F0DFA8;
+    border-radius:10px; padding:10px 14px; font-size:13.5px; color:#5c4a12;
+  }
+  .hint-box.show{display:block;}
+
+  /* ---------- Scoreboard ---------- */
+  .scoreboard{
+    background:var(--card); border-radius:16px; box-shadow:var(--shadow); padding:22px;
+    height:fit-content; position:sticky; top:20px; display:flex; flex-direction:column; gap:16px;
+    border:1px solid rgba(32,36,43,0.06);
+  }
+  .scoreboard h3{
+    margin:0 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:0.6px; color:#8A8577; font-weight:700;
+  }
+  .score-display{display:flex; align-items:baseline; gap:6px;}
+  .score-display .num{font-family:'Baloo 2'; font-size:44px; font-weight:800; color:var(--navy); line-height:1;}
+  .score-display .of{font-size:14px; color:#8A8577; font-weight:600;}
+  .status-pill{
+    display:inline-block; font-size:12.5px; font-weight:700; padding:5px 12px; border-radius:20px;
+    background:#EDEAE0; color:#6b6656; margin-top:6px;
+  }
+  .status-pill.hit{background:#DDF0E4; color:var(--outer);}
+  .progress-track{height:10px; background:#EDEAE0; border-radius:6px; overflow:hidden; position:relative;}
+  .progress-fill{
+    height:100%; width:0%; background:linear-gradient(90deg, var(--outer), var(--gold));
+    border-radius:6px; transition:width .35s ease;
+  }
+  .progress-target-mark{position:absolute; top:0; left:66.66%; width:2px; height:10px; background:var(--navy);}
+  .progress-caption{display:flex; justify-content:space-between; font-size:11.5px; color:#8A8577; margin-top:4px;}
+
+  .target-svg-box{display:flex; justify-content:center;}
+
+  .qchips{display:flex; flex-direction:column; gap:8px;}
+  .chip-row{display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; background:#FAF9F4;}
+  .chip-row .rl{font-size:12.5px; font-weight:600; width:64px;}
+  .chip-row .rv{margin-left:auto; font-family:'JetBrains Mono'; font-weight:700; font-size:13px;}
+  .qchip{
+    width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:700; text-decoration:none; color:#6b6656;
+    border:1.5px solid var(--line); background:#fff; transition:all .15s;
+  }
+  .qchip:hover{border-color:var(--navy);}
+  .qchip.correct{background:var(--outer); border-color:var(--outer); color:#fff;}
+  .qchip.retry{border-color:var(--bull); color:var(--bull); background:var(--bull-soft);}
+  .qchip.shown{background:#E8E6F2; border-color:#B9B7D6; color:#4a4a78;}
+  .legend-mini{font-size:11.5px; color:#8A8577; line-height:1.5;}
+
+  .win-banner{
+    display:none; background:linear-gradient(135deg, var(--outer), #4CAE86); color:#fff;
+    border-radius:12px; padding:14px 16px; text-align:center; font-family:'Baloo 2'; font-weight:700; font-size:15px;
+  }
+  .win-banner.show{display:block; animation: pop .35s ease;}
+  @keyframes pop{ from{transform:scale(0.9); opacity:0;} to{transform:scale(1); opacity:1;} }
+
+  .reset-btn{
+    border:1.5px solid var(--line); background:none; border-radius:10px; padding:9px; font-size:13px;
+    font-weight:600; color:#8A8577; cursor:pointer; font-family:'Inter';
+  }
+  .reset-btn:hover{border-color:var(--bull); color:var(--bull);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important; scroll-behavior:auto !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <span class="badge-standard">Standard 4.NBT.A · Generalize Place Value Understanding</span>
+      <h1 class="display">🎯 Target Practice: Place Value</h1>
+    </div>
+    <div class="name-date">
+      <div>
+        <label for="sname">Name</label>
+        <input type="text" id="sname" placeholder="Type your name">
+      </div>
+      <div>
+        <label for="sdate">Date</label>
+        <input type="text" id="sdate" placeholder="MM/DD/YYYY">
+      </div>
+    </div>
+  </div>
+
+  <div class="rules">
+    <svg class="target-icon" width="72" height="72" viewBox="0 0 72 72" fill="none" aria-hidden="true">
+      <circle cx="36" cy="36" r="34" fill="#2F8F6E"/>
+      <circle cx="36" cy="36" r="23" fill="#D98A2B"/>
+      <circle cx="36" cy="36" r="12" fill="#C4432F"/>
+      <circle cx="36" cy="36" r="4" fill="#fff"/>
+    </svg>
+    <div class="rules-text">
+      <span class="tag">Game rules &amp; strategy</span>
+      <p>Reach the <strong>target score: 12 points</strong> (out of 18 possible). Pick any problems you like, type your answer, then press <strong>Check answer</strong>.</p>
+      <p><strong>Points are added only when your answer is correct.</strong> If it's not, you'll get a clue and can try again. No single ring is worth 12 points on its own, so mix your shots.</p>
+    </div>
+    <div class="rings-legend">
+      <div class="ring-chip"><span class="ring-dot outer"></span>Outer · 1 pt · max 3</div>
+      <div class="ring-chip"><span class="ring-dot middle"></span>Middle · 2 pts · max 6</div>
+      <div class="ring-chip"><span class="ring-dot bull"></span>Bullseye · 3 pts · max 9</div>
+    </div>
+  </div>
+
+  <!-- ===================== QUESTIONS ===================== -->
+  <div class="questions">
+
+    <!-- OUTER RING -->
+    <div class="tier outer">
+      <div class="tier-head">
+        <h2 class="display">🟢 Outer Ring — Procedural &amp; Direct Application</h2>
+        <span class="pts">1 point each</span>
+      </div>
+      <div class="tier-body">
+
+        <div class="question" id="q1" data-q="1">
+          <div class="qhead"><span class="qnum">Q1</span><span class="qpts">1 pt</span><span class="qstatus" id="s1">Not tried</span></div>
+          <div class="qtext">Write the number <span class="given">460,053</span> in expanded form.</div>
+          <div class="fields">
+            <div class="field">
+              <label class="lab" for="q1a">Expanded form</label>
+              <input type="text" id="q1a" autocomplete="off" placeholder="Example format: 300 + 20 + 1">
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-check" onclick="checkQ(1)">Check answer</button>
+            <button class="btn btn-ghost" onclick="toggleHint(this)">💡 Show a hint</button>
+            <button class="btn btn-ghost btn-reveal" onclick="revealQ(1)">Show the answer (no points)</button>
+          </div>
+          <div class="hint-box">Break each digit into its place: hundred-thousands, ten-thousands, thousands, hundreds, tens, ones. Skip any place that's a zero.</div>
+          <div class="feedback" id="f1" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="question" id="q2" data-q="2">
+          <div class="qhead"><span class="qnum">Q2</span><span class="qpts">1 pt</span><span class="qstatus" id="s2">Not tried</span></div>
+          <div class="qtext">Write the number <span class="given">730,812</span> in word form.</div>
+          <div class="fields">
+            <div class="field">
+              <label class="lab" for="q2a">Word form</label>
+              <input type="text" id="q2a" autocomplete="off" placeholder="Type the number in words">
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-check" onclick="checkQ(2)">Check answer</button>
+            <button class="btn btn-ghost" onclick="toggleHint(this)">💡 Show a hint</button>
+            <button class="btn btn-ghost btn-reveal" onclick="revealQ(2)">Show the answer (no points)</button>
+          </div>
+          <div class="hint-box">Read the number in periods, left to right: the thousands period first, then the ones period. Say "thousand" once, right after the first period.</div>
+          <div class="feedback" id="f2" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="question" id="q3" data-q="3">
+          <div class="qhead"><span class="qnum">Q3</span><span class="qpts">1 pt</span><span class="qstatus" id="s3">Not tried</span></div>
+          <div class="qtext">Write the standard form for <strong>one hundred forty thousand, one hundred four</strong>.</div>
+          <div class="fields">
+            <div class="field">
+              <label class="lab" for="q3a">Standard form</label>
+              <input type="text" id="q3a" inputmode="numeric" autocomplete="off" placeholder="Type the number with digits">
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-check" onclick="checkQ(3)">Check answer</button>
+            <button class="btn btn-ghost" onclick="toggleHint(this)">💡 Show a hint</button>
+            <button class="btn btn-ghost btn-reveal" onclick="revealQ(3)">Show the answer (no points)</button>
+          </div>
+          <div class="hint-box">"One hundred forty thousand" fills the thousands period. "One hundred four" fills the ones period. Watch out for a place that isn't named.</div>
+          <div class="feedback" id="f3" role="status" aria-live="polite"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MIDDLE RING -->
+    <div class="tier middle">
+      <div class="tier-head">
+        <h2 class="display">🟠 Middle Ring — Multi-Step &amp; Contextual Application</h2>
+        <span class="pts">2 points each</span>
+      </div>
+      <div class="tier-body">
+
+        <div class="question" id="q4" data-q="4">
+          <div class="qhead"><span class="qnum">Q4</span><span class="qpts">2 pts</span><span class="qstatus" id="s4">Not tried</span></div>
+          <div class="qtext">Maya recorded a visitor count as <span class="given">600,000 + 40,000 + 300 + 9</span>. Marcus wrote the word form as <span class="quote">"six hundred forty thousand, four hundred thirty-nine."</span> Who is correct? Explain the mistake.</div>
+          <div class="fields">
+            <div class="field">
+              <span class="lab">Who is correct?</span>
+              <div class="opts row">
+                <label class="opt"><input type="radio" name="q4who" value="maya"> Maya</label>
+                <label class="opt"><input type="radio" name="q4who" value="marcus"> Marcus</label>
+              </div>
+            </div>
+            <div class="field">
+              <label class="lab" for="q4word">Write the correct word form of the visitor count</label>
+              <input type="text" id="q4word" autocomplete="off" placeholder="Type the number in words">
+            </div>
+            <div class="field">
+              <label class="lab" for="q4why">Explain the mistake (your teacher reads this)</label>
+              <textarea id="q4why" rows="3" placeholder="Show work & explanation"></textarea>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-check" onclick="checkQ(4)">Check answer</button>
+            <button class="btn btn-ghost" onclick="toggleHint(this)">💡 Show a hint</button>
+            <button class="btn btn-ghost btn-reveal" onclick="revealQ(4)">Show the answer (no points)</button>
+          </div>
+          <div class="hint-box">Rewrite Maya's expanded form as a standard number first, digit by digit. Then compare it to Marcus's word form one place at a time.</div>
+          <div class="feedback" id="f4" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="question" id="q5" data-q="5">
+          <div class="qhead"><span class="qnum">Q5</span><span class="qpts">2 pts</span><span class="qstatus" id="s5">Not tried</span></div>
+          <div class="qtext">Combine the value of the digit in the ten-thousands place of <span class="given">102,453</span> with the value of the digit in the hundreds place of <span class="given">640,739</span>. Write the final sum in expanded form.</div>
+          <div class="fields">
+            <div class="field">
+              <label class="lab" for="q5a">Value of the ten-thousands digit in 102,453</label>
+              <input type="text" id="q5a" inputmode="numeric" autocomplete="off" placeholder="Value">
+            </div>
+            <div class="field">
+              <label class="lab" for="q5b">Value of the hundreds digit in 640,739</label>
+              <input type="text" id="q5b" inputmode="numeric" autocomplete="off" placeholder="Value">
+            </div>
+            <div class="field">
+              <label class="lab" for="q5c">Final sum in expanded form</label>
+              <input type="text" id="q5c" autocomplete="off" placeholder="Final answer">
+            </div>
+            <div class="field">
+              <label class="lab" for="q5w">Show your work (optional)</label>
+              <textarea id="q5w" rows="2" placeholder="Show work"></textarea>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-check" onclick="checkQ(5)">Check answer</button>
+            <button class="btn btn-ghost" onclick="toggleHint(this)">💡 Show a hint</button>
+            <button class="btn btn-ghost btn-reveal" onclick="revealQ(5)">Show the answer (no points)</button>
+          </div>
+          <div class="hint-box">Write out each number with a place-value chart. Find each digit's value (what it's worth, not just the digit itself), then add the two values.</div>
+          <div class="feedback" id="f5" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="question" id="q6" data-q="6">
+          <div class="qhead"><span class="qnum">Q6</span><span class="qpts">2 pts</span><span class="qstatus" id="s6">Not tried</span></div>
+          <div class="qtext">Order these three numbers from least to greatest: <span class="given">45,039</span>, <span class="given">39,012</span>, and <span class="given">76,005</span>. Use comparison symbols (&lt; or &gt;) to show your answer.</div>
+          <div class="fields">
+            <div class="field">
+              <label class="lab" for="q6a">Ordered comparison</label>
+              <div class="inline-row">
+                <div class="grow"><input type="text" id="q6a" autocomplete="off" placeholder="Example format: 10 < 20 < 30"></div>
+                <button type="button" class="sym" onclick="insertSym('q6a','<')" aria-label="Insert less-than symbol">&lt;</button>
+                <button type="button" class="sym" onclick="insertSym('q6a','>')" aria-label="Insert greater-than symbol">&gt;</button>
+              </div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-check" onclick="checkQ(6)">Check answer</button>
+            <button class="btn btn-ghost" onclick="toggleHint(this)">💡 Show a hint</button>
+            <button class="btn btn-ghost btn-reveal" onclick="revealQ(6)">Show the answer (no points)</button>
+          </div>
+          <div class="hint-box">All three numbers have 5 digits, so compare the ten-thousands digit first. Only move to the next place if there's a tie.</div>
+          <div class="feedback" id="f6" role="status" aria-live="polite"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BULLSEYE -->
+    <div class="tier bull">
+      <div class="tier-head">
+        <h2 class="display">🔴 Bullseye — Extension, Justification &amp; Non-Routine Thinking</h2>
+        <span class="pts">3 points each</span>
+      </div>
+      <div class="tier-body">
+
+        <div class="question" id="q7" data-q="7">
+          <div class="qhead"><span class="qnum">Q7</span><span class="qpts">3 pts</span><span class="qstatus" id="s7">Not tried</span></div>
+          <div class="qtext">Create a 6-digit number that meets <strong>all four</strong> clues:
+            <ul class="clues">
+              <li>It has a <strong>0</strong> in the ten-thousands place.</li>
+              <li>The value of the hundred-thousands digit is <strong>700,000</strong>.</li>
+              <li>The ones digit is <strong>3 times</strong> the tens digit.</li>
+              <li>When written in expanded form, the sum of all digits used is <strong>20</strong>.</li>
+            </ul>
+          </div>
+          <div class="fields">
+            <div class="field">
+              <label class="lab" for="q7a">Your 6-digit number</label>
+              <input type="text" id="q7a" inputmode="numeric" autocomplete="off" placeholder="______">
+              <div class="hint-line">There's more than one right answer. The checker tests all four clues.</div>
+            </div>
+            <div class="field">
+              <label class="lab" for="q7w">Show your digit-checking work (your teacher reads this)</label>
+              <textarea id="q7w" rows="2" placeholder="Show digit checking work"></textarea>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-check" onclick="checkQ(7)">Check answer</button>
+            <button class="btn btn-ghost" onclick="toggleHint(this)">💡 Show a hint</button>
+            <button class="btn btn-ghost btn-reveal" onclick="revealQ(7)">Show an example (no points)</button>
+          </div>
+          <div class="hint-box">Lock in the digits you know first (hundred-thousands and ten-thousands). Then guess and check the remaining digits against the last two clues.</div>
+          <div class="feedback" id="f7" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="question" id="q8" data-q="8">
+          <div class="qhead"><span class="qnum">Q8</span><span class="qpts">3 pts</span><span class="qstatus" id="s8">Not tried</span></div>
+          <div class="qtext">Sam says: <span class="quote">"In 460,053, the zero in the thousands place means the entire thousands period has no value."</span> Is Sam correct or incorrect? Explain using place value concepts.</div>
+          <div class="fields">
+            <div class="field">
+              <span class="lab">Is Sam correct?</span>
+              <div class="opts row">
+                <label class="opt"><input type="radio" name="q8sam" value="correct"> Correct</label>
+                <label class="opt"><input type="radio" name="q8sam" value="incorrect"> Incorrect</label>
+              </div>
+            </div>
+            <div class="field">
+              <span class="lab">Which reason fits best?</span>
+              <div class="opts">
+                <label class="opt"><input type="radio" name="q8why" value="a"> A zero always makes the whole period worth nothing.</label>
+                <label class="opt"><input type="radio" name="q8why" value="b"> The zero only holds the thousands place. The 4 and 6 in the same period still have value.</label>
+                <label class="opt"><input type="radio" name="q8why" value="c"> The thousands period is just one digit, so a zero means nothing is there.</label>
+                <label class="opt"><input type="radio" name="q8why" value="d"> Zeros are never needed in place value.</label>
+              </div>
+            </div>
+            <div class="field">
+              <label class="lab" for="q8ex">Explain in your own words (your teacher reads this)</label>
+              <textarea id="q8ex" rows="3" placeholder="Argument & justification"></textarea>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-check" onclick="checkQ(8)">Check answer</button>
+            <button class="btn btn-ghost" onclick="toggleHint(this)">💡 Show a hint</button>
+            <button class="btn btn-ghost btn-reveal" onclick="revealQ(8)">Show the answer (no points)</button>
+          </div>
+          <div class="hint-box">A period is a group of three digits. Find the digits in the thousands period of 460,053 and ask whether they're all zeros.</div>
+          <div class="feedback" id="f8" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="question" id="q9" data-q="9">
+          <div class="qhead"><span class="qnum">Q9</span><span class="qpts">3 pts</span><span class="qstatus" id="s9">Not tried</span></div>
+          <div class="qtext">Write a 6-digit number in standard form that contains a zero in the hundreds place. Then write its word form and expanded form, showing how the zero affects both forms.</div>
+          <div class="fields">
+            <div class="field">
+              <label class="lab" for="q9std">Standard form</label>
+              <input type="text" id="q9std" inputmode="numeric" autocomplete="off" placeholder="______">
+            </div>
+            <div class="field">
+              <label class="lab" for="q9word">Word form</label>
+              <input type="text" id="q9word" autocomplete="off" placeholder="Type your number in words">
+            </div>
+            <div class="field">
+              <label class="lab" for="q9exp">Expanded form</label>
+              <input type="text" id="q9exp" autocomplete="off" placeholder="Example format: 300 + 20 + 1">
+            </div>
+            <div class="field">
+              <label class="lab" for="q9why">How does the zero affect both forms? (your teacher reads this)</label>
+              <textarea id="q9why" rows="3" placeholder="Explanation"></textarea>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-check" onclick="checkQ(9)">Check answer</button>
+            <button class="btn btn-ghost" onclick="toggleHint(this)">💡 Show a hint</button>
+            <button class="btn btn-ghost btn-reveal" onclick="revealQ(9)">Show an example (no points)</button>
+          </div>
+          <div class="hint-box">The hundreds place is the 4th digit from the left. In expanded form, a zero place has no term. In word form, it gets no word.</div>
+          <div class="feedback" id="f9" role="status" aria-live="polite"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== SCOREBOARD ===================== -->
+  <aside class="scoreboard">
+    <div>
+      <h3>My total score</h3>
+      <div class="score-display">
+        <span class="num" id="scoreNum">0</span>
+        <span class="of">/ 12 target &nbsp;(18 possible)</span>
+      </div>
+      <div class="status-pill" id="statusPill">Take your shots</div>
+    </div>
+
+    <div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-target-mark" title="Target: 12"></div>
+      </div>
+      <div class="progress-caption"><span>0</span><span>Target: 12</span><span>18</span></div>
+    </div>
+
+    <div class="target-svg-box hide-mobile">
+      <svg width="140" height="140" viewBox="0 0 150 150" aria-hidden="true">
+        <circle cx="75" cy="75" r="70" fill="#E3F1EA" stroke="#2F8F6E" stroke-width="2"/>
+        <circle id="ringOuter" cx="75" cy="75" r="70" fill="#2F8F6E" opacity="0"/>
+        <circle cx="75" cy="75" r="47" fill="#FBEEDC" stroke="#D98A2B" stroke-width="2"/>
+        <circle id="ringMiddle" cx="75" cy="75" r="47" fill="#D98A2B" opacity="0"/>
+        <circle cx="75" cy="75" r="24" fill="#FBE7E2" stroke="#C4432F" stroke-width="2"/>
+        <circle id="ringBull" cx="75" cy="75" r="24" fill="#C4432F" opacity="0"/>
+        <circle cx="75" cy="75" r="6" fill="#fff" stroke="#20242B" stroke-width="1.5"/>
+      </svg>
+    </div>
+
+    <div class="qchips hide-mobile">
+      <div class="chip-row"><span class="ring-dot outer"></span><span class="rl">Outer</span>
+        <a class="qchip" data-chip="1" href="#q1">1</a><a class="qchip" data-chip="2" href="#q2">2</a><a class="qchip" data-chip="3" href="#q3">3</a>
+        <span class="rv" id="outerVal">0/3</span></div>
+      <div class="chip-row"><span class="ring-dot middle"></span><span class="rl">Middle</span>
+        <a class="qchip" data-chip="4" href="#q4">4</a><a class="qchip" data-chip="5" href="#q5">5</a><a class="qchip" data-chip="6" href="#q6">6</a>
+        <span class="rv" id="middleVal">0/6</span></div>
+      <div class="chip-row"><span class="ring-dot bull"></span><span class="rl">Bullseye</span>
+        <a class="qchip" data-chip="7" href="#q7">7</a><a class="qchip" data-chip="8" href="#q8">8</a><a class="qchip" data-chip="9" href="#q9">9</a>
+        <span class="rv" id="bullVal">0/9</span></div>
+      <div class="legend-mini">Green = correct · Red = try again · Purple = answer shown (0 pts)</div>
+    </div>
+
+    <div class="win-banner" id="winBanner">🎯 Target hit! Great strategy!</div>
+
+    <button class="reset-btn hide-mobile" onclick="resetAll()">Start over</button>
+  </aside>
+
+</div>
+
+<script>
+  const $  = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const PTS  = q => q <= 3 ? 1 : (q <= 6 ? 2 : 3);
+  const RING = q => q <= 3 ? 'outer' : (q <= 6 ? 'middle' : 'bull');
+
+  const state = {};
+  for (let q = 1; q <= 9; q++) state[q] = { attempts: 0, status: 'open' };
+
+  /* ---------- number helpers ---------- */
+  const ONES = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve',
+    'thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+  const TENS = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+
+  function below1000(n){
+    const h = Math.floor(n / 100), r = n % 100;
+    let s = '';
+    if (h) s += ONES[h] + ' hundred';
+    if (r){
+      if (s) s += ' ';
+      if (r < 20) s += ONES[r];
+      else { s += TENS[Math.floor(r / 10)]; if (r % 10) s += '-' + ONES[r % 10]; }
+    }
+    return s;
+  }
+  function toWords(n){
+    if (n === 0) return 'zero';
+    const th = Math.floor(n / 1000), r = n % 1000;
+    let s = '';
+    if (th) s += below1000(th) + ' thousand';
+    if (r){ if (s) s += ' '; s += below1000(r); }
+    return s;
+  }
+  const normWords = s => s.toLowerCase().replace(/[-,]/g, ' ').replace(/\band\b/g, ' ').replace(/\s+/g, ' ').trim();
+  const digitsOf  = s => s.replace(/[,\s]/g, '');
+
+  // "300,000 + 40,000 + 5" -> [300000, 40000, 5]; also accepts 4 x 10,000. Returns null if unreadable.
+  function parseTerms(s){
+    const cleaned = s.replace(/,/g, '').replace(/[()]/g, '').trim();
+    if (!cleaned) return null;
+    const parts = cleaned.split('+').map(p => p.trim()).filter(Boolean);
+    if (!parts.length) return null;
+    const out = [];
+    for (const p of parts){
+      const factors = p.split(/[x×*]/i).map(f => f.trim());
+      if (factors.some(f => !/^\d+$/.test(f))) return null;
+      out.push(factors.reduce((a, f) => a * Number(f), 1));
+    }
+    return out;
+  }
+  function expandedTarget(n){
+    const d = String(n).split('');
+    return d.map((x, i) => Number(x) * Math.pow(10, d.length - 1 - i)).filter(v => v > 0);
+  }
+  function sameTerms(a, b){
+    const x = a.filter(v => v > 0).sort((p, q) => p - q);
+    const y = b.filter(v => v > 0).sort((p, q) => p - q);
+    return x.length === y.length && x.every((v, i) => v === y[i]);
+  }
+  function expandedHelp(terms, n){
+    if (!terms) return 'Write the number as parts joined by + signs, like 300 + 20 + 1.';
+    const sum = terms.reduce((a, b) => a + b, 0);
+    if (sum === n) return 'Your parts add up to the right total, but write one part for each digit place (skip places with a zero).';
+    return 'The parts should add up to ' + n.toLocaleString('en-US') + '. Check the value of each digit.';
+  }
+  const radio = name => { const r = document.querySelector('input[name="' + name + '"]:checked'); return r ? r.value : null; };
+  const longEnough = el => el.value.trim().length >= 15;
+
+  /* ---------- answer checkers ---------- */
+  const checkers = {
+    1(){
+      const el = $('#q1a');
+      if (!el.value.trim()) return { skip: true, msg: 'Type your answer first.' };
+      const terms = parseTerms(el.value);
+      const ok = !!terms && sameTerms(terms, expandedTarget(460053));
+      return { ok, msg: ok ? '' : expandedHelp(terms, 460053), fields: [{ el, ok }] };
+    },
+    2(){
+      const el = $('#q2a');
+      if (!el.value.trim()) return { skip: true, msg: 'Type your answer first.' };
+      if (/\d/.test(el.value)) return { ok: false, msg: 'Use words, not digits.', fields: [{ el, ok: false }] };
+      const ok = normWords(el.value) === normWords(toWords(730812));
+      return { ok, msg: ok ? '' : 'Read the number in two chunks: the thousands period, then the ones period. Check your spelling, too.', fields: [{ el, ok }] };
+    },
+    3(){
+      const el = $('#q3a');
+      const d = digitsOf(el.value);
+      if (!d) return { skip: true, msg: 'Type your answer first.' };
+      if (!/^\d+$/.test(d)) return { ok: false, msg: 'Type the number using digits only.', fields: [{ el, ok: false }] };
+      const ok = d === '140104';
+      let msg = '';
+      if (!ok) msg = d.length !== 6
+        ? 'Count your digits. Each period has three digits, and a zero holds any place that isn\'t named.'
+        : 'Close. Check each period on its own: first the thousands period, then the ones period.';
+      return { ok, msg, fields: [{ el, ok }] };
+    },
+    4(){
+      const who = radio('q4who'), wf = $('#q4word'), ex = $('#q4why');
+      const issues = [], fields = [];
+      if (!who) issues.push('Choose who is correct.');
+      else if (who !== 'maya') issues.push('Rebuild Maya\'s number from her expanded form, then compare it to Marcus\'s word form one place at a time.');
+      const wOk = !/\d/.test(wf.value) && normWords(wf.value) === normWords(toWords(640309));
+      fields.push({ el: wf, ok: wOk });
+      if (!wOk) issues.push('The word form isn\'t right yet. Use the digits from Maya\'s expanded form, and remember a zero place isn\'t named.');
+      if (!longEnough(ex)) issues.push('Write at least one sentence explaining Marcus\'s mistake.');
+      return { ok: issues.length === 0, msg: issues.map(i => '<div class="issue">• ' + i + '</div>').join(''), fields };
+    },
+    5(){
+      const a = $('#q5a'), b = $('#q5b'), c = $('#q5c');
+      const num = el => { const t = el.value.replace(/,/g, '').trim(); return /^\d+$/.test(t) ? Number(t) : null; };
+      const aOk = num(a) === 0;
+      const bOk = num(b) === 700;
+      const terms = parseTerms(c.value);
+      const cOk = !!terms && sameTerms(terms, [700]);
+      const issues = [];
+      if (!aOk) issues.push('Look at 102,453 again: which digit is in the ten-thousands place, and what is it worth?');
+      if (!bOk) issues.push('Find the hundreds place in 640,739. Give what that digit is worth, not just the digit.');
+      if (!cOk) issues.push('The final sum should be the two values added together, written in expanded form.');
+      return {
+        ok: aOk && bOk && cOk,
+        msg: issues.map(i => '<div class="issue">• ' + i + '</div>').join(''),
+        fields: [{ el: a, ok: aOk }, { el: b, ok: bOk }, { el: c, ok: cOk }]
+      };
+    },
+    6(){
+      const el = $('#q6a');
+      if (!el.value.trim()) return { skip: true, msg: 'Type your answer first.' };
+      const tokens = el.value.match(/\d[\d,]*|[<>]/g) || [];
+      const nums = tokens.filter(t => /\d/.test(t)).map(t => Number(t.replace(/,/g, '')));
+      const ops  = tokens.filter(t => t === '<' || t === '>');
+      const bad = msg => ({ ok: false, msg, fields: [{ el, ok: false }] });
+      if (nums.length !== 3) return bad('Include all three numbers from the problem.');
+      if ([...nums].sort((x, y) => x - y).join() !== '39012,45039,76005') return bad('Use the three numbers from the problem, exactly as written.');
+      if (ops.length !== 2) return bad('Put a comparison symbol (< or >) between each pair of numbers.');
+      const asc = nums.join() === '39012,45039,76005';
+      const desc = nums.join() === '76005,45039,39012';
+      if (asc && ops.every(o => o === '<')) return { ok: true, msg: '', fields: [{ el, ok: true }] };
+      if (desc && ops.every(o => o === '>')) return bad('That statement is true, but it goes greatest to least. The problem asks for least to greatest.');
+      if (asc || desc) return bad('Check your symbols. Each one should point the same way as your order.');
+      return bad('The numbers aren\'t in order yet. Compare the ten-thousands digits first.');
+    },
+    7(){
+      const el = $('#q7a');
+      const d = digitsOf(el.value);
+      if (!d) return { skip: true, msg: 'Type your answer first.' };
+      if (!/^\d{6}$/.test(d)) return { ok: false, msg: 'Enter exactly 6 digits.', fields: [{ el, ok: false }] };
+      const n = d.split('').map(Number);
+      const clues = [
+        ['A 0 in the ten-thousands place', n[1] === 0],
+        ['The hundred-thousands digit is worth 700,000', n[0] === 7],
+        ['The ones digit is 3 times the tens digit', n[5] === 3 * n[4]],
+        ['The digits add up to 20', n.reduce((a, b) => a + b, 0) === 20]
+      ];
+      const ok = clues.every(c => c[1]);
+      const list = '<ul>' + clues.map(c => '<li>' + (c[1] ? '✅' : '❌') + ' ' + c[0] + '</li>').join('') + '</ul>';
+      return { ok, msg: ok ? '' : 'Here\'s how your number did on each clue:' + list, fields: [{ el, ok }] };
+    },
+    8(){
+      const sam = radio('q8sam'), why = radio('q8why'), ex = $('#q8ex');
+      const issues = [];
+      if (!sam) issues.push('Choose whether Sam is correct or incorrect.');
+      else if (sam !== 'incorrect') issues.push('Look at 460,053 again. Which digits sit in the thousands period, and are they all zeros?');
+      if (!why) issues.push('Choose the reason that best fits place value.');
+      else if (why !== 'b') issues.push('That reason doesn\'t match how periods work. Test each reason on the number 460,053.');
+      if (!longEnough(ex)) issues.push('Write at least one sentence of your own explanation.');
+      return { ok: issues.length === 0, msg: issues.map(i => '<div class="issue">• ' + i + '</div>').join(''), fields: [] };
+    },
+    9(){
+      const std = $('#q9std'), wf = $('#q9word'), ex = $('#q9exp'), why = $('#q9why');
+      const issues = [], fields = [];
+      const d = digitsOf(std.value);
+      let n = null;
+      if (!/^\d{6}$/.test(d) || d[0] === '0'){
+        issues.push('Standard form needs exactly 6 digits, and it can\'t start with 0.');
+        fields.push({ el: std, ok: false });
+      } else if (d[3] !== '0'){
+        issues.push('The hundreds place is the 4th digit from the left, and it needs to be a 0.');
+        fields.push({ el: std, ok: false });
+      } else {
+        n = Number(d);
+        fields.push({ el: std, ok: true });
+      }
+      if (n !== null){
+        const wOk = !/\d/.test(wf.value) && normWords(wf.value) === normWords(toWords(n));
+        fields.push({ el: wf, ok: wOk });
+        if (!wOk) issues.push('Your word form doesn\'t match your standard form. A zero place isn\'t named.');
+        const terms = parseTerms(ex.value);
+        const eOk = !!terms && sameTerms(terms, expandedTarget(n));
+        fields.push({ el: ex, ok: eOk });
+        if (!eOk) issues.push('Expanded form: ' + expandedHelp(terms, n));
+      } else {
+        issues.push('Fix your standard form first, then the word and expanded forms can be checked.');
+      }
+      if (!longEnough(why)) issues.push('Write at least one sentence about how the zero affects both forms.');
+      return { ok: issues.length === 0, msg: issues.map(i => '<div class="issue">• ' + i + '</div>').join(''), fields };
+    }
+  };
+
+  const reveals = {
+    1: '400,000 + 60,000 + 50 + 3',
+    2: 'seven hundred thirty thousand, eight hundred twelve',
+    3: '140,104',
+    4: 'Maya is correct. The count is 640,309, so the word form is "six hundred forty thousand, three hundred nine." Marcus said "four hundred thirty-nine," which doesn\'t match the digits 3, 0, 9.',
+    5: 'The ten-thousands digit in 102,453 is 0, so its value is 0. The hundreds digit in 640,739 is 7, so its value is 700. Sum: 0 + 700 = 700.',
+    6: '39,012 &lt; 45,039 &lt; 76,005',
+    7: 'One possible answer: 704,513. Check: ten-thousands is 0, the 7 is worth 700,000, the ones digit 3 is 3 × the tens digit 1, and 7+0+4+5+1+3 = 20. Other answers also work.',
+    8: 'Sam is incorrect. The zero only holds the thousands place. The 4 and 6 in the same period are worth 400,000 and 60,000, so the thousands period is 460 thousand.',
+    9: 'Example: 342,016 → three hundred forty-two thousand, sixteen → 300,000 + 40,000 + 2,000 + 10 + 6. The zero holds the hundreds place, so there is no hundreds word and no hundreds term.'
+  };
+
+  /* ---------- actions ---------- */
+  function lockQ(q){
+    $$('#q' + q + ' input, #q' + q + ' textarea').forEach(el => { el.disabled = true; });
+    $$('#q' + q + ' .btn-check, #q' + q + ' .btn-reveal').forEach(b => { b.style.display = 'none'; });
+  }
+
+  function checkQ(q){
+    const st = state[q];
+    if (st.status !== 'open') return;
+    const res = checkers[q]();
+    const fb = $('#f' + q);
+
+    if (res.skip){
+      fb.className = 'feedback info';
+      fb.textContent = res.msg;
+      return;
+    }
+    st.attempts++;
+    (res.fields || []).forEach(f => { f.el.classList.toggle('ok', f.ok); f.el.classList.toggle('bad', !f.ok); });
+
+    if (res.ok){
+      st.status = 'correct';
+      lockQ(q);
+      fb.className = 'feedback good';
+      fb.innerHTML = '✅ <strong>Correct! +' + PTS(q) + ' point' + (PTS(q) > 1 ? 's' : '') + '.</strong>';
+    } else {
+      fb.className = 'feedback bad';
+      fb.innerHTML = '❌ <strong>Not yet. No points, but you can try again.</strong><div>' + res.msg + '</div>';
+      if (st.attempts >= 3) $('#q' + q + ' .btn-reveal').classList.add('show');
+    }
+    updateUI();
+  }
+
+  function revealQ(q){
+    const st = state[q];
+    if (st.status !== 'open') return;
+    st.status = 'shown';
+    lockQ(q);
+    const fb = $('#f' + q);
+    fb.className = 'feedback info';
+    fb.innerHTML = '<strong>Answer shown. No points for this one.</strong><div style="margin-top:4px">' + reveals[q] + '</div>';
+    updateUI();
+  }
+
+  function toggleHint(btn){
+    const box = btn.closest('.question').querySelector('.hint-box');
+    box.classList.toggle('show');
+    btn.textContent = box.classList.contains('show') ? '💡 Hide hint' : '💡 Show a hint';
+  }
+
+  function insertSym(id, sym){
+    const el = document.getElementById(id);
+    if (el.disabled) return;
+    const s = el.selectionStart ?? el.value.length, e = el.selectionEnd ?? el.value.length;
+    const pad = ' ' + sym + ' ';
+    el.value = el.value.slice(0, s) + pad + el.value.slice(e);
+    const pos = s + pad.length;
+    el.focus();
+    el.setSelectionRange(pos, pos);
+    el.classList.remove('ok', 'bad');
+  }
+
+  /* ---------- scoreboard ---------- */
+  function updateUI(){
+    let outer = 0, middle = 0, bull = 0;
+    for (let q = 1; q <= 9; q++){
+      const st = state[q];
+      const sEl = $('#s' + q), chip = document.querySelector('[data-chip="' + q + '"]');
+      sEl.className = 'qstatus'; chip.className = 'qchip';
+      if (st.status === 'correct'){
+        sEl.classList.add('correct'); sEl.textContent = '✓ Correct +' + PTS(q);
+        chip.classList.add('correct');
+        if (RING(q) === 'outer') outer += 1; else if (RING(q) === 'middle') middle += 2; else bull += 3;
+      } else if (st.status === 'shown'){
+        sEl.classList.add('shown'); sEl.textContent = 'Answer shown';
+        chip.classList.add('shown');
+      } else if (st.attempts > 0){
+        sEl.classList.add('retry'); sEl.textContent = 'Try again';
+        chip.classList.add('retry');
+      } else {
+        sEl.textContent = 'Not tried';
+      }
+    }
+    const total = outer + middle + bull;
+    $('#outerVal').textContent  = outer + '/3';
+    $('#middleVal').textContent = middle + '/6';
+    $('#bullVal').textContent   = bull + '/9';
+    $('#scoreNum').textContent  = total;
+    $('#progressFill').style.width = Math.min(total / 18 * 100, 100) + '%';
+    $('#ringOuter').style.opacity  = (outer / 3) * 0.85;
+    $('#ringMiddle').style.opacity = (middle / 6) * 0.85;
+    $('#ringBull').style.opacity   = (bull / 9) * 0.85;
+
+    const pill = $('#statusPill'), banner = $('#winBanner');
+    if (total >= 12){
+      pill.textContent = 'Target hit! 🎯'; pill.classList.add('hit'); banner.classList.add('show');
+    } else {
+      pill.textContent = total === 0 ? 'Take your shots' : (12 - total) + ' pts to target';
+      pill.classList.remove('hit'); banner.classList.remove('show');
+    }
+  }
+
+  function resetAll(){
+    if (!confirm('Clear all answers and points and start over?')) return;
+    for (let q = 1; q <= 9; q++){
+      state[q] = { attempts: 0, status: 'open' };
+      $$('#q' + q + ' input, #q' + q + ' textarea').forEach(el => {
+        el.disabled = false; el.classList.remove('ok', 'bad');
+        if (el.type === 'radio') el.checked = false; else el.value = '';
+      });
+      $$('#q' + q + ' .btn-check').forEach(b => { b.style.display = ''; });
+      $$('#q' + q + ' .btn-reveal').forEach(b => { b.style.display = ''; b.classList.remove('show'); });
+      const fb = $('#f' + q); fb.className = 'feedback'; fb.innerHTML = '';
+    }
+    updateUI();
+  }
+
+  // Clear red/green marks when a student edits a field; Enter checks single-line answers
+  document.addEventListener('input', e => { if (e.target.classList) e.target.classList.remove('ok', 'bad'); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type === 'text'){
+      const qEl = e.target.closest('.question');
+      if (qEl) { e.preventDefault(); checkQ(Number(qEl.dataset.q)); }
+    }
+  });
+
+  updateUI();
+</script>
+
+</body>
+</html>
