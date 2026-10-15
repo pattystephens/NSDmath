@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Target Practice: Place Value</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F5EF;
+    --ink:#20242B;
+    --navy:#1D2B4F;
+    --outer:#2F8F6E;
+    --outer-soft:#E3F1EA;
+    --middle:#D98A2B;
+    --middle-soft:#FBEEDC;
+    --bull:#C4432F;
+    --bull-soft:#FBE7E2;
+    --gold:#E4B13B;
+    --line:#DEDAD0;
+    --card:#FFFFFF;
+    --shadow: 0 1px 2px rgba(32,36,43,0.04), 0 8px 24px -12px rgba(32,36,43,0.18);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(32,36,43,0.05) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  .display{font-family:'Baloo 2', sans-serif;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  /* ---------- Layout ---------- */
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 100px;
+    display:grid;
+    grid-template-columns: 1fr 300px;
+    gap:28px;
+  }
+  @media (max-width: 900px){
+    .wrap{grid-template-columns:1fr; padding-bottom:180px;}
+    .scoreboard{
+      position:fixed; bottom:0; left:0; right:0; top:auto;
+      max-height:none; width:100%; border-radius:20px 20px 0 0;
+      z-index:50; box-shadow:0 -10px 30px rgba(0,0,0,0.18);
+    }
+    .target-svg-box{display:none;}
+  }
+
+  /* ---------- Header ---------- */
+  .masthead{
+    grid-column:1/-1;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:20px;
+    padding-bottom:14px;
+    border-bottom:3px solid var(--ink);
+    margin-bottom:6px;
+    flex-wrap:wrap;
+  }
+  .masthead h1{
+    font-size:clamp(28px,4vw,42px);
+    margin:0 0 6px;
+    letter-spacing:0.2px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .masthead .badge-standard{
+    font-family:'Inter';
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.4px;
+    text-transform:uppercase;
+    color:var(--navy);
+    background:#EDEAE0;
+    padding:5px 10px;
+    border-radius:6px;
+    display:inline-block;
+  }
+  .name-date{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    min-width:220px;
+  }
+  .name-date label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    font-weight:700;
+    color:#8A8577;
+  }
+  .name-date input{
+    border:none;
+    border-bottom:2px solid var(--line);
+    background:transparent;
+    font-family:'Inter';
+    font-size:15px;
+    padding:4px 2px;
+    outline:none;
+    color:var(--ink);
+    width:100%;
+  }
+  .name-date input:focus{border-bottom-color:var(--navy);}
+
+  /* ---------- Rules card ---------- */
+  .rules{
+    grid-column:1/-1;
+    background:var(--navy);
+    color:#F3F1EA;
+    border-radius:16px;
+    padding:20px 24px;
+    display:flex;
+    gap:22px;
+    align-items:center;
+    flex-wrap:wrap;
+    box-shadow:var(--shadow);
+  }
+  .rules .target-icon{flex-shrink:0;}
+  .rules-text{flex:1; min-width:240px;}
+  .rules-text .tag{
+    display:inline-block;
+    background:var(--gold);
+    color:#3A2B08;
+    font-weight:700;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    padding:4px 10px;
+    border-radius:20px;
+    margin-bottom:8px;
+  }
+  .rules-text p{margin:0; font-size:14.5px; color:#D9D6C8;}
+  .rules-text strong{color:#fff;}
+  .rings-legend{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .ring-chip{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:10px;
+    padding:8px 12px;
+    font-size:13px;
+  }
+  .ring-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .ring-dot.outer{background:var(--outer);}
+  .ring-dot.middle{background:var(--middle);}
+  .ring-dot.bull{background:var(--bull);}
+
+  /* ---------- Question sections ---------- */
+  .questions{display:flex; flex-direction:column; gap:22px;}
+
+  .tier{
+    background:var(--card);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    border:1px solid rgba(32,36,43,0.06);
+  }
+  .tier-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 22px;
+    color:#fff;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .tier-head h2{
+    font-size:18px;
+    margin:0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .tier-head .pts{
+    font-size:12.5px;
+    background:rgba(255,255,255,0.22);
+    padding:5px 10px;
+    border-radius:20px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .tier.outer .tier-head{background:var(--outer);}
+  .tier.middle .tier-head{background:var(--middle);}
+  .tier.bull .tier-head{background:var(--bull);}
+
+  .tier-body{padding:6px 22px 18px;}
+
+  .question{
+    padding:18px 0;
+    border-bottom:1px dashed var(--line);
+    display:flex;
+    gap:14px;
+  }
+  .question:last-child{border-bottom:none;}
+
+  .qcheck{
+    flex-shrink:0;
+    padding-top:2px;
+  }
+  .qcheck input{
+    width:22px;
+    height:22px;
+    cursor:pointer;
+    accent-color: currentColor;
+  }
+  .tier.outer .qcheck input{color:var(--outer);}
+  .tier.middle .qcheck input{color:var(--middle);}
+  .tier.bull .qcheck input{color:var(--bull);}
+
+  .qbody{flex:1; min-width:0;}
+  .qnum-label{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .qnum{
+    font-weight:800;
+    font-family:'Baloo 2';
+    font-size:16px;
+  }
+  .tier.outer .qnum{color:var(--outer);}
+  .tier.middle .qnum{color:var(--middle);}
+  .tier.bull .qnum{color:var(--bull);}
+
+  .qtext{font-size:15px; color:var(--ink);}
+  .qtext .given{
+    font-family:'JetBrains Mono';
+    font-weight:700;
+    background:#F1EFE6;
+    padding:1px 6px;
+    border-radius:5px;
+    font-size:13.5px;
+  }
+  .qtext .quote{font-style:italic; color:#4a4438;}
+  ul.clues{margin:8px 0 0; padding-left:20px; font-size:14.5px;}
+  ul.clues li{margin-bottom:3px;}
+
+  textarea, input.answer{
+    width:100%;
+    margin-top:10px;
+    border:1.5px dashed var(--line);
+    border-radius:10px;
+    background:#FBFAF6;
+    font-family:'Inter';
+    font-size:14.5px;
+    padding:10px 12px;
+    resize:vertical;
+    outline:none;
+    color:var(--ink);
+    transition:border-color .15s, background .15s;
+  }
+  textarea:focus, input.answer:focus{
+    border-color: var(--navy);
+    border-style:solid;
+    background:#fff;
+  }
+  input.answer{height:42px;}
+
+  .check-btn{
+    margin-top:10px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:none;
+    border:1.5px solid var(--line);
+    border-radius:20px;
+    padding:6px 14px;
+    font-size:12.5px;
+    font-weight:600;
+    color:#6b6656;
+    cursor:pointer;
+    font-family:'Inter';
+    transition:all .15s;
+  }
+  .check-btn:hover{border-color:var(--navy); color:var(--navy);}
+
+  .hint-box{
+    display:none;
+    margin-top:10px;
+    background:#FFF9EC;
+    border:1px solid #F0DFA8;
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:13.5px;
+    color:#5c4a12;
+  }
+  .hint-box.show{display:block;}
+
+  /* ---------- Scoreboard sidebar ---------- */
+  .scoreboard{
+    background:var(--card);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:22px;
+    height:fit-content;
+    position:sticky;
+    top:20px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    border:1px solid rgba(32,36,43,0.06);
+  }
+  .scoreboard h3{
+    margin:0;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    color:#8A8577;
+    font-weight:700;
+  }
+  .score-display{
+    display:flex;
+    align-items:baseline;
+    gap:6px;
+  }
+  .score-display .num{
+    font-family:'Baloo 2';
+    font-size:44px;
+    font-weight:800;
+    color:var(--navy);
+    line-height:1;
+  }
+  .score-display .of{
+    font-size:15px;
+    color:#8A8577;
+    font-weight:600;
+  }
+  .status-pill{
+    display:inline-block;
+    align-self:flex-start;
+    font-size:12.5px;
+    font-weight:700;
+    padding:5px 12px;
+    border-radius:20px;
+    background:#EDEAE0;
+    color:#6b6656;
+    transition:all .2s;
+  }
+  .status-pill.hit{background:#DDF0E4; color:var(--outer);}
+
+  .progress-track{
+    height:10px;
+    background:#EDEAE0;
+    border-radius:6px;
+    overflow:hidden;
+    position:relative;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--outer), var(--gold));
+    border-radius:6px;
+    transition:width .35s ease;
+  }
+  .progress-target-mark{
+    position:absolute;
+    top:-3px;
+    left:66.6%;
+    width:2px;
+    height:16px;
+    background:var(--navy);
+  }
+  .progress-caption{
+    display:flex;
+    justify-content:space-between;
+    font-size:11.5px;
+    color:#8A8577;
+    margin-top:4px;
+  }
+
+  .target-svg-box{
+    display:flex;
+    justify-content:center;
+    padding:6px 0 2px;
+  }
+
+  .breakdown{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    font-size:13.5px;
+  }
+  .breakdown-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 10px;
+    border-radius:8px;
+    background:#FAF9F4;
+  }
+  .breakdown-row .lab{display:flex; align-items:center; gap:8px; font-weight:600;}
+  .breakdown-row .val{font-family:'JetBrains Mono'; font-weight:700;}
+
+  .reset-btn{
+    margin-top:2px;
+    border:1.5px solid var(--line);
+    background:none;
+    border-radius:10px;
+    padding:9px;
+    font-size:13px;
+    font-weight:600;
+    color:#8A8577;
+    cursor:pointer;
+    font-family:'Inter';
+  }
+  .reset-btn:hover{border-color:var(--bull); color:var(--bull);}
+
+  .win-banner{
+    display:none;
+    background:linear-gradient(135deg, var(--outer), #4CAE86);
+    color:#fff;
+    border-radius:12px;
+    padding:14px 16px;
+    text-align:center;
+    font-family:'Baloo 2';
+    font-weight:700;
+    font-size:15px;
+  }
+  .win-banner.show{display:block; animation: pop .35s ease;}
+  @keyframes pop{ from{transform:scale(0.9); opacity:0;} to{transform:scale(1); opacity:1;} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <span class="badge-standard">Standard 4.NBT.A · Generalize Place Value Understanding</span>
+      <h1 class="display">🎯 Target Practice: Place Value</h1>
+    </div>
+    <div class="name-date">
+      <div>
+        <label for="sname">Name</label>
+        <input type="text" id="sname" placeholder="Type your name">
+      </div>
+      <div>
+        <label for="sdate">Date</label>
+        <input type="text" id="sdate" placeholder="MM/DD/YYYY">
+      </div>
+    </div>
+  </div>
+
+  <div class="rules">
+    <svg class="target-icon" width="72" height="72" viewBox="0 0 72 72" fill="none">
+      <circle cx="36" cy="36" r="34" fill="var(--outer)"/>
+      <circle cx="36" cy="36" r="23" fill="var(--middle)"/>
+      <circle cx="36" cy="36" r="12" fill="var(--bull)"/>
+      <circle cx="36" cy="36" r="4" fill="#fff"/>
+    </svg>
+    <div class="rules-text">
+      <span class="tag">Game rules &amp; strategy</span>
+      <p>Choose problems from any tier to reach the <strong>target score: 12 points</strong> (out of 18 possible).
+      You do <strong>not</strong> need to complete all problems — no single ring has enough points alone to reach the target, so pick your shots wisely.</p>
+    </div>
+    <div class="rings-legend">
+      <div class="ring-chip"><span class="ring-dot outer"></span>Outer · 1 pt · max 3</div>
+      <div class="ring-chip"><span class="ring-dot middle"></span>Middle · 2 pts · max 6</div>
+      <div class="ring-chip"><span class="ring-dot bull"></span>Bullseye · 3 pts · max 9</div>
+    </div>
+  </div>
+
+  <!-- ===================== QUESTIONS ===================== -->
+  <div class="questions">
+
+    <!-- OUTER RING -->
+    <div class="tier outer">
+      <div class="tier-head">
+        <h2 class="display">🟢 Outer Ring — Procedural &amp; Direct Application</h2>
+        <span class="pts">1 point each</span>
+      </div>
+      <div class="tier-body">
+
+        <div class="question" data-points="1">
+          <div class="qcheck"><input type="checkbox" data-q="1"></div>
+          <div class="qbody">
+            <div class="qnum-label"><span class="qnum">Q1</span></div>
+            <div class="qtext">Write the number <span class="given">460,053</span> in expanded form.</div>
+            <textarea rows="2" placeholder="Expanded form:"></textarea>
+            <button class="check-btn" onclick="toggleHint(this)">💡 Show a hint</button>
+            <div class="hint-box">Break each digit into its place: hundred-thousands, ten-thousands, thousands, hundreds, tens, ones. Skip any place that's a zero.</div>
+          </div>
+        </div>
+
+        <div class="question" data-points="1">
+          <div class="qcheck"><input type="checkbox" data-q="2"></div>
+          <div class="qbody">
+            <div class="qnum-label"><span class="qnum">Q2</span></div>
+            <div class="qtext">Write the number <span class="given">730,812</span> in word form.</div>
+            <textarea rows="2" placeholder="Word form:"></textarea>
+            <button class="check-btn" onclick="toggleHint(this)">💡 Show a hint</button>
+            <div class="hint-box">Read the number in periods, left to right: the "thousands" period first, then the ones period. Say "thousand" once, right after the first period.</div>
+          </div>
+        </div>
+
+        <div class="question" data-points="1">
+          <div class="qcheck"><input type="checkbox" data-q="3"></div>
+          <div class="qbody">
+            <div class="qnum-label"><span class="qnum">Q3</span></div>
+            <div class="qtext">Write the standard form for <strong>one hundred forty thousand, one hundred four</strong>.</div>
+            <input class="answer" type="text" placeholder="Standard form:">
+            <button class="check-btn" onclick="toggleHint(this)">💡 Show a hint</button>
+            <div class="hint-box">"One hundred forty thousand" fills the thousands period. "One hundred four" fills the ones period — watch out for the missing tens digit.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MIDDLE RING -->
+    <div class="tier middle">
+      <div class="tier-head">
+        <h2 class="display">🟠 Middle Ring — Multi-Step &amp; Contextual Application</h2>
+        <span class="pts">2 points each</span>
+      </div>
+      <div class="tier-body">
+
+        <div class="question" data-points="2">
+          <div class="qcheck"><input type="checkbox" data-q="4"></div>
+          <div class="qbody">
+            <div class="qnum-label"><span class="qnum">Q4</span></div>
+            <div class="qtext">Maya recorded a visitor count as <span class="given">600,000 + 40,000 + 300 + 9</span>. Marcus wrote the word form as <span class="quote">"six hundred forty thousand, four hundred thirty-nine."</span> Who is correct? Explain the mistake.</div>
+            <textarea rows="3" placeholder="Show work & explanation:"></textarea>
+            <button class="check-btn" onclick="toggleHint(this)">💡 Show a hint</button>
+            <div class="hint-box">Rewrite Maya's expanded form as a standard number first, digit by digit, then compare it place-by-place to what Marcus said.</div>
+          </div>
+        </div>
+
+        <div class="question" data-points="2">
+          <div class="qcheck"><input type="checkbox" data-q="5"></div>
+          <div class="qbody">
+            <div class="qnum-label"><span class="qnum">Q5</span></div>
+            <div class="qtext">Combine the value of the digit in the ten-thousands place of <span class="given">102,453</span> with the value of the digit in the hundreds place of <span class="given">640,739</span>. Write the final sum in expanded form.</div>
+            <textarea rows="3" placeholder="Show work & final answer:"></textarea>
+            <button class="check-btn" onclick="toggleHint(this)">💡 Show a hint</button>
+            <div class="hint-box">Find each digit's actual value (not just the digit itself), then add those two values together.</div>
+          </div>
+        </div>
+
+        <div class="question" data-points="2">
+          <div class="qcheck"><input type="checkbox" data-q="6"></div>
+          <div class="qbody">
+            <div class="qnum-label"><span class="qnum">Q6</span></div>
+            <div class="qtext">Order these three numbers from least to greatest: <span class="given">45,039</span>, <span class="given">39,012</span>, and <span class="given">76,005</span>. Use comparison symbols (&lt; or &gt;) to show your answer.</div>
+            <input class="answer" type="text" placeholder="Ordered comparison:">
+            <button class="check-btn" onclick="toggleHint(this)">💡 Show a hint</button>
+            <div class="hint-box">All three numbers have 5 digits, so compare the ten-thousands digit first. Only move to the next place if there's a tie.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BULLSEYE -->
+    <div class="tier bull">
+      <div class="tier-head">
+        <h2 class="display">🔴 Bullseye — Extension, Justification &amp; Non-Routine Thinking</h2>
+        <span class="pts">3 points each</span>
+      </div>
+      <div class="tier-body">
+
+        <div class="question" data-points="3">
+          <div class="qcheck"><input type="checkbox" data-q="7"></div>
+          <div class="qbody">
+            <div class="qnum-label"><span class="qnum">Q7</span></div>
+            <div class="qtext">Create a 6-digit number that meets <strong>all four</strong> clues:
+              <ul class="clues">
+                <li>It has a <strong>0</strong> in the ten-thousands place.</li>
+                <li>The value of the hundred-thousands digit is <strong>700,000</strong>.</li>
+                <li>The ones digit is <strong>3 times</strong> the tens digit.</li>
+                <li>When written in expanded form, the sum of all digits used is <strong>20</strong>.</li>
+              </ul>
+            </div>
+            <textarea rows="3" placeholder="Show digit-checking work & state your 6-digit number:"></textarea>
+            <button class="check-btn" onclick="toggleHint(this)">💡 Show a hint</button>
+            <div class="hint-box">Lock in the digits you know first (hundred-thousands = 7, ten-thousands = 0), then use guess-and-check with the remaining clues to find the tens/ones pair.</div>
+          </div>
+        </div>
+
+        <div class="question" data-points="3">
+          <div class="qcheck"><input type="checkbox" data-q="8"></div>
+          <div class="qbody">
+            <div class="qnum-label"><span class="qnum">Q8</span></div>
+            <div class="qtext">Sam says: <span class="quote">"In 460,053, the zero in the thousands place means the entire thousands period has no value."</span> Is Sam correct or incorrect? Explain using place value concepts.</div>
+            <textarea rows="3" placeholder="Argument & justification:"></textarea>
+            <button class="check-btn" onclick="toggleHint(this)">💡 Show a hint</button>
+            <div class="hint-box">The thousands period has two digits: thousands and ten-thousands. Check both digits in that period, not just one.</div>
+          </div>
+        </div>
+
+        <div class="question" data-points="3">
+          <div class="qcheck"><input type="checkbox" data-q="9"></div>
+          <div class="qbody">
+            <div class="qnum-label"><span class="qnum">Q9</span></div>
+            <div class="qtext">Write a 6-digit number in standard form that contains a zero in the hundreds place. Then write its word form and expanded form, showing how the zero affects both forms.</div>
+            <textarea rows="4" placeholder="Standard form, word form, expanded form & explanation:"></textarea>
+            <button class="check-btn" onclick="toggleHint(this)">💡 Show a hint</button>
+            <div class="hint-box">In expanded form, the zero place simply disappears (you don't write "+ 0"). In word form, it just doesn't get its own word.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== SCOREBOARD ===================== -->
+  <div class="scoreboard">
+    <div>
+      <h3>My total score</h3>
+      <div class="score-display">
+        <span class="num" id="scoreNum">0</span>
+        <span class="of">/ 12 target &nbsp;(18 possible)</span>
+      </div>
+      <div class="status-pill" id="statusPill">Take your shots</div>
+    </div>
+
+    <div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-target-mark" title="Target: 12"></div>
+      </div>
+      <div class="progress-caption"><span>0</span><span>Target: 12</span><span>18</span></div>
+    </div>
+
+    <div class="target-svg-box">
+      <svg width="150" height="150" viewBox="0 0 150 150">
+        <circle cx="75" cy="75" r="70" fill="var(--outer-soft)" stroke="var(--outer)" stroke-width="2"/>
+        <circle id="ringOuter" cx="75" cy="75" r="70" fill="var(--outer)" opacity="0" stroke="var(--outer)" stroke-width="2"/>
+        <circle cx="75" cy="75" r="47" fill="var(--middle-soft)" stroke="var(--middle)" stroke-width="2"/>
+        <circle id="ringMiddle" cx="75" cy="75" r="47" fill="var(--middle)" opacity="0" stroke="var(--middle)" stroke-width="2"/>
+        <circle cx="75" cy="75" r="24" fill="var(--bull-soft)" stroke="var(--bull)" stroke-width="2"/>
+        <circle id="ringBull" cx="75" cy="75" r="24" fill="var(--bull)" opacity="0" stroke="var(--bull)" stroke-width="2"/>
+        <circle cx="75" cy="75" r="6" fill="#fff" stroke="var(--ink)" stroke-width="1.5"/>
+      </svg>
+    </div>
+
+    <div class="breakdown">
+      <div class="breakdown-row"><span class="lab"><span class="ring-dot outer"></span>Outer</span><span class="val" id="outerVal">0 / 3</span></div>
+      <div class="breakdown-row"><span class="lab"><span class="ring-dot middle"></span>Middle</span><span class="val" id="middleVal">0 / 6</span></div>
+      <div class="breakdown-row"><span class="lab"><span class="ring-dot bull"></span>Bullseye</span><span class="val" id="bullVal">0 / 9</span></div>
+    </div>
+
+    <div class="win-banner" id="winBanner">🎯 Target hit! Great strategy!</div>
+
+    <button class="reset-btn" onclick="resetBoard()">Reset all checks</button>
+  </div>
+
+</div>
+
+<script>
+  const checks = document.querySelectorAll('.question input[type="checkbox"]');
+  const outerIds = ['1','2','3'];
+  const middleIds = ['4','5','6'];
+  const bullIds = ['7','8','9'];
+
+  function computeScore(){
+    let outer=0, middle=0, bull=0;
+    checks.forEach(cb=>{
+      if(!cb.checked) return;
+      const q = cb.dataset.q;
+      if(outerIds.includes(q)) outer += 1;
+      else if(middleIds.includes(q)) middle += 2;
+      else if(bullIds.includes(q)) bull += 3;
+    });
+    const total = outer+middle+bull;
+
+    document.getElementById('outerVal').textContent = outer+' / 3';
+    document.getElementById('middleVal').textContent = middle+' / 6';
+    document.getElementById('bullVal').textContent = bull+' / 9';
+    document.getElementById('scoreNum').textContent = total;
+
+    const pct = Math.min(total/18*100, 100);
+    document.getElementById('progressFill').style.width = pct+'%';
+
+    document.getElementById('ringOuter').style.opacity = outer>0 ? Math.min(outer/3,1)*0.85 : 0;
+    document.getElementById('ringMiddle').style.opacity = middle>0 ? Math.min(middle/6,1)*0.85 : 0;
+    document.getElementById('ringBull').style.opacity = bull>0 ? Math.min(bull/9,1)*0.85 : 0;
+
+    const pill = document.getElementById('statusPill');
+    const banner = document.getElementById('winBanner');
+    if(total >= 12){
+      pill.textContent = 'Target hit! 🎯';
+      pill.classList.add('hit');
+      banner.classList.add('show');
+    } else {
+      pill.textContent = total===0 ? 'Take your shots' : (12-total)+' pts to target';
+      pill.classList.remove('hit');
+      banner.classList.remove('show');
+    }
+  }
+
+  checks.forEach(cb=>cb.addEventListener('change', computeScore));
+
+  function toggleHint(btn){
+    const box = btn.nextElementSibling;
+    box.classList.toggle('show');
+    btn.textContent = box.classList.contains('show') ? '💡 Hide hint' : '💡 Show a hint';
+  }
+
+  function resetBoard(){
+    if(!confirm('Clear all checkmarks and answers?')) return;
+    checks.forEach(cb=>cb.checked=false);
+    document.querySelectorAll('textarea, input.answer').forEach(el=>el.value='');
+    computeScore();
+  }
+
+  computeScore();
+</script>
+
+</body>
+</html>
