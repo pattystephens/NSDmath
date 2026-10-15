@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fraction check: 1/3 + 1/4</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #F7F6FD;
+    --surface: #FFFFFF;
+    --ink: #272446;
+    --muted: #5C5880;
+    --line: #D6D2EC;
+    --accent: #5B4BB7;
+    --accent-ink: #FFFFFF;
+    --sel-bg: #ECE9FA;
+    --good: #17775A;
+    --good-bg: #E2F4EC;
+    --warn: #8A5200;
+    --warn-bg: #FFF0D6;
+    --bar2: #1F9C8C;
+    --cell-empty: #F0EEF9;
+    --focus: #1B66D9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #14122B;
+      --surface: #1E1B3D;
+      --ink: #EEECFB;
+      --muted: #ABA7CF;
+      --line: #3B3769;
+      --accent: #A99BFF;
+      --accent-ink: #14122B;
+      --sel-bg: #2C2862;
+      --good: #6FDDB2;
+      --good-bg: #123C30;
+      --warn: #FFCB75;
+      --warn-bg: #40300F;
+      --bar2: #4FD1C0;
+      --cell-empty: #272350;
+      --focus: #8DB8FF;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #14122B;
+    --surface: #1E1B3D;
+    --ink: #EEECFB;
+    --muted: #ABA7CF;
+    --line: #3B3769;
+    --accent: #A99BFF;
+    --accent-ink: #14122B;
+    --sel-bg: #2C2862;
+    --good: #6FDDB2;
+    --good-bg: #123C30;
+    --warn: #FFCB75;
+    --warn-bg: #40300F;
+    --bar2: #4FD1C0;
+    --cell-empty: #272350;
+    --focus: #8DB8FF;
+  }
+
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Avenir Next", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.5;
+  }
+  main {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 3rem;
+  }
+
+  .topic { margin: 0 0 1rem; color: var(--muted); font-size: 0.95rem; }
+
+  /* Question */
+  .question {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 1.25rem;
+    padding: 1.5rem 1rem 1.25rem;
+    text-align: center;
+  }
+  .expr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.6rem, 3vw, 1.2rem);
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    font-size: clamp(2.2rem, 9vw, 3.4rem);
+    line-height: 1;
+  }
+  .instruction { margin: 1rem 0 0; color: var(--muted); }
+
+  /* Stacked fraction */
+  .frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    line-height: 1.05;
+    font-size: 0.9em;
+  }
+  .frac .n { padding: 0 0.22em 0.06em; border-bottom: 0.09em solid currentColor; }
+  .frac .d { padding: 0.06em 0.22em 0; }
+  .expr .frac { font-size: 1em; }
+  .expr .op { font-weight: 400; }
+
+  /* Choices */
+  fieldset { border: 0; margin: 1.25rem 0 0; padding: 0; min-width: 0; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .choice {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 5.25rem;
+    padding: 0.75rem 0.9rem;
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: 1rem;
+    cursor: pointer;
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  .choice input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .choice .badge {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.1rem; height: 2.1rem;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    color: var(--muted);
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .choice .mark { margin-left: auto; font-size: 1.4rem; line-height: 1; font-weight: 700; }
+  .choice:hover { border-color: var(--accent); }
+  .choice input:focus-visible ~ .badge { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+  .choice.selected { border-color: var(--accent); background: var(--sel-bg); }
+  .choice.selected .badge { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  .choice.right { border-color: var(--good); background: var(--good-bg); }
+  .choice.right .badge { background: var(--good); border-color: var(--good); color: var(--bg); }
+  .choice.right .mark { color: var(--good); }
+
+  .choice.wrong { border-color: var(--warn); background: var(--warn-bg); }
+  .choice.wrong .badge { background: var(--warn); border-color: var(--warn); color: var(--bg); }
+  .choice.wrong .mark { color: var(--warn); }
+
+  .choice.out { opacity: 0.55; border-style: dashed; cursor: default; }
+  .choice.out:hover { border-color: var(--line); }
+  .choice.locked { cursor: default; }
+  .choice.locked:hover { border-color: inherit; }
+
+  /* Buttons */
+  .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; }
+  button {
+    font: inherit;
+    font-weight: 700;
+    border-radius: 0.8rem;
+    padding: 0.8rem 1.4rem;
+    min-height: 3rem;
+    cursor: pointer;
+    border: 2px solid var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  button.secondary { background: transparent; color: var(--accent); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button:focus-visible, .toggle input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+  /* Feedback */
+  #feedback { margin-top: 1.5rem; }
+  .panel {
+    border-radius: 1.25rem;
+    padding: 1.25rem 1.25rem 1.4rem;
+    border: 2px solid var(--line);
+    background: var(--surface);
+  }
+  .panel.good { border-color: var(--good); background: var(--good-bg); }
+  .panel.warn { border-color: var(--warn); background: var(--warn-bg); }
+  .panel h2 { margin: 0 0 0.5rem; font-size: 1.35rem; line-height: 1.25; }
+  .panel.good h2 { color: var(--good); }
+  .panel.warn h2 { color: var(--warn); }
+  .panel p { margin: 0.5rem 0; max-width: 34rem; }
+  .panel .try { font-weight: 600; }
+  .panel .check {
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .panel .frac { font-size: 0.85em; }
+  .panel ol { margin: 0.75rem 0 0.25rem; padding-left: 1.25rem; }
+  .panel li { margin: 0.35rem 0; }
+
+  /* Fraction bars */
+  .bars { margin: 1.1rem 0 0.4rem; display: grid; gap: 0.85rem; }
+  .bar-label { margin: 0 0 0.3rem; font-size: 0.95rem; font-weight: 600; }
+  .bar { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; }
+  .bar i {
+    display: block;
+    height: 1.6rem;
+    border-radius: 4px;
+    background: var(--cell-empty);
+    border: 1px solid var(--line);
+  }
+  .bar i.a { background: var(--accent); border-color: var(--accent); }
+  .bar i.b { background: var(--bar2); border-color: var(--bar2); }
+
+  /* Teacher notes */
+  .teacher {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 0.8rem;
+    background: var(--surface);
+    border: 1px dashed var(--muted);
+    font-size: 0.95rem;
+  }
+  .teacher p { margin: 0.4rem 0; }
+  body.teacher-on .teacher { display: block; }
+
+  .footer { margin-top: 2.25rem; display: flex; justify-content: flex-end; }
+  .toggle { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.95rem; cursor: pointer; }
+  .toggle input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+
+  @media (max-width: 380px) {
+    .choice { padding: 0.6rem; gap: 0.5rem; }
+    .choice .badge { width: 1.8rem; height: 1.8rem; font-size: 0.9rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .choice { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <p class="topic">Adding fractions with unlike denominators</p>
+
+  <section class="question" aria-labelledby="q">
+    <div class="expr" id="q" role="img" aria-label="One third plus one fourth equals what?">
+      <span class="frac"><span class="n">1</span><span class="d">3</span></span>
+      <span class="op">+</span>
+      <span class="frac"><span class="n">1</span><span class="d">4</span></span>
+      <span class="op">=</span>
+      <span>?</span>
+    </div>
+    <p class="instruction">Pick the answer you think is right, then check it.</p>
+  </section>
+
+  <fieldset>
+    <legend class="sr-only">Answer choices</legend>
+    <div class="choices" id="choices"></div>
+  </fieldset>
+
+  <div class="actions" id="actions">
+    <button type="button" id="submit" disabled>Check my answer</button>
+  </div>
+
+  <div id="feedback" role="status" aria-live="polite"></div>
+
+  <div class="footer">
+    <label class="toggle"><input type="checkbox" id="teacherToggle"> Teacher notes</label>
+  </div>
+</main>
+
+<script>
+(function () {
+  function frac(n, d) {
+    return '<span class="frac"><span class="n">' + n + '</span><span class="d">' + d + '</span></span>';
+  }
+
+  var OPTIONS = [
+    { key: 'A', n: 7, d: 12, correct: true },
+    { key: 'B', n: 2, d: 7 },
+    { key: 'C', n: 1, d: 6 },
+    { key: 'D', n: 7, d: 24 }
+  ];
+
+  var FEEDBACK = {
+    B: {
+      title: 'Not yet: the pieces are different sizes',
+      body: 'You added the tops (1 + 1) and the bottoms (3 + 4). But thirds and fourths are different-sized pieces, so you can\u2019t count them together yet.',
+      tryIt: 'Try this: rewrite ' + frac(1, 3) + ' and ' + frac(1, 4) + ' so both use the same size pieces. Then add.',
+      check: 'Quick check: ' + frac(2, 7) + ' is less than ' + frac(1, 3) + ' (' + frac(6, 21) + ' compared to ' + frac(7, 21) + '). Adding ' + frac(1, 4) + ' more should make the total bigger than ' + frac(1, 3) + '.',
+      teacher: {
+        misconception: 'Straight-across addition: treating fraction addition like whole-number pair addition.',
+        error: 'Added numerators (1 + 1 = 2) and denominators (3 + 4 = 7) without finding a common denominator.',
+        reasoning: '\u201cYou add the tops and add the bottoms, like any other addition.\u201d The student hasn\u2019t internalized that the denominator names the size of the piece, and unlike pieces can\u2019t be combined directly.'
+      }
+    },
+    C: {
+      title: 'Close: one step is missing',
+      body: 'You found a common denominator of 12. That\u2019s a strong start. But the tops have to change too: ' + frac(1, 3) + ' is not the same amount as ' + frac(1, 12) + '.',
+      tryIt: 'Try this: you multiplied 3 by 4 to get 12. What do you have to do to the 1 on top so the amount stays the same? Do the same for ' + frac(1, 4) + '.',
+      check: 'Quick check: ' + frac(1, 6) + ' is only half of ' + frac(1, 3) + ', so it\u2019s too small to be the sum.',
+      teacher: {
+        misconception: 'Finding a common denominator without adjusting the numerators to match.',
+        error: 'Identified 12 as the common denominator, then added the original numerators (1 + 1 = 2) to get 2/12, which simplifies to 1/6.',
+        reasoning: '\u201cThe bottoms have to match, but the tops stay the same because they\u2019re still 1 piece.\u201d The student applies equivalent fractions to the denominator only.'
+      }
+    },
+    D: {
+      title: 'Almost: keep the bottom the same',
+      body: 'Your twelfths are right: ' + frac(4, 12) + ' and ' + frac(3, 12) + '. The slip came in the last step, where you added the bottoms (12 + 12) too.',
+      tryIt: 'Try this: once the pieces are the same size, the size doesn\u2019t change. 4 twelfths + 3 twelfths is how many twelfths?',
+      check: 'Quick check: ' + frac(7, 24) + ' is less than ' + frac(1, 3) + ' (' + frac(7, 24) + ' compared to ' + frac(8, 24) + '). The sum has to be bigger than ' + frac(1, 3) + '.',
+      teacher: {
+        misconception: 'Over-generalizing \u201cadd numerators, add denominators\u201d even after converting to a common denominator.',
+        error: 'Converted correctly to 4/12 and 3/12, then added numerators (4 + 3 = 7) and denominators (12 + 12 = 24).',
+        reasoning: '\u201cWhenever I add fractions, I add the bottoms too.\u201d The student memorized a blanket procedure and doesn\u2019t see that matching denominators name a shared unit that stays fixed.'
+      }
+    }
+  };
+
+  var choicesEl = document.getElementById('choices');
+  var submitBtn = document.getElementById('submit');
+  var actionsEl = document.getElementById('actions');
+  var feedbackEl = document.getElementById('feedback');
+  var teacherToggle = document.getElementById('teacherToggle');
+
+  var selected = null;
+  var eliminated = {};
+  var finished = false;
+
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function buildChoices() {
+    choicesEl.innerHTML = '';
+    OPTIONS.forEach(function (o) {
+      var label = document.createElement('label');
+      label.className = 'choice';
+      label.dataset.key = o.key;
+      label.innerHTML =
+        '<input type="radio" name="answer" value="' + o.key + '" aria-label="' + o.key + ': ' + o.n + ' over ' + o.d + '">' +
+        '<span class="badge" aria-hidden="true">' + o.key + '</span>' +
+        '<span aria-hidden="true">' + frac(o.n, o.d) + '</span>' +
+        '<span class="mark" aria-hidden="true"></span>';
+      choicesEl.appendChild(label);
+    });
+  }
+
+  function cards() { return Array.prototype.slice.call(choicesEl.querySelectorAll('.choice')); }
+
+  function refresh() {
+    cards().forEach(function (card) {
+      var key = card.dataset.key;
+      var input = card.querySelector('input');
+      var mark = card.querySelector('.mark');
+      card.classList.toggle('selected', selected === key && !finished && !eliminated[key]);
+      card.classList.toggle('out', !!eliminated[key]);
+      card.classList.toggle('locked', finished || !!eliminated[key]);
+      input.disabled = finished || !!eliminated[key];
+      if (!eliminated[key]) { card.classList.remove('wrong'); mark.textContent = ''; }
+    });
+    submitBtn.disabled = !selected || finished;
+  }
+
+  function bar(label, a, b) {
+    var cells = '';
+    for (var i = 0; i < 12; i++) {
+      var cls = i < a ? 'a' : (i < a + b ? 'b' : '');
+      cells += '<i class="' + cls + '"></i>';
+    }
+    return '<div><p class="bar-label">' + label + '</p><div class="bar" aria-hidden="true">' + cells + '</div></div>';
+  }
+
+  // Bar with teal cells (used for the second fraction)
+  function barTeal(label, count) {
+    var cells = '';
+    for (var i = 0; i < 12; i++) { cells += '<i class="' + (i < count ? 'b' : '') + '"></i>'; }
+    return '<div><p class="bar-label">' + label + '</p><div class="bar" aria-hidden="true">' + cells + '</div></div>';
+  }
+
+  function solutionPanel(heading, intro) {
+    return '<div class="panel good">' +
+      '<h2>' + heading + '</h2>' +
+      '<p>' + intro + '</p>' +
+      '<ol>' +
+        '<li>The smallest number both 3 and 4 divide into is 12, so use twelfths.</li>' +
+        '<li>' + frac(1, 3) + ' = ' + frac(4, 12) + ' and ' + frac(1, 4) + ' = ' + frac(3, 12) + '. Top and bottom both get multiplied by the same number.</li>' +
+        '<li>Add the tops and keep the bottom: ' + frac(4, 12) + ' + ' + frac(3, 12) + ' = ' + frac(7, 12) + '.</li>' +
+      '</ol>' +
+      '<div class="bars">' +
+        bar(frac(1, 3) + ' is 4 of 12 equal parts', 4, 0) +
+        barTeal(frac(1, 4) + ' is 3 of 12 equal parts', 3) +
+        bar('Together: 4 + 3 = 7 of 12 equal parts', 4, 3) +
+      '</div>' +
+      '<div class="actions"><button type="button" class="secondary" id="restart">Start over</button></div>' +
+    '</div>';
+  }
+
+  function teacherHTML(t) {
+    return '<div class="teacher">' +
+      '<p><strong>Misconception:</strong> ' + t.misconception + '</p>' +
+      '<p><strong>Student error:</strong> ' + t.error + '</p>' +
+      '<p><strong>Student reasoning:</strong> ' + t.reasoning + '</p>' +
+    '</div>';
+  }
+
+  function showFeedback(html) {
+    feedbackEl.innerHTML = html;
+    feedbackEl.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
+
+  function mark(key, state) {
+    var card = choicesEl.querySelector('.choice[data-key="' + key + '"]');
+    if (!card) return;
+    card.classList.remove('selected');
+    card.classList.add(state);
+    card.querySelector('.mark').textContent = state === 'right' ? '\u2713' : '\u2715';
+  }
+
+  function submit() {
+    if (!selected || finished) return;
+    var key = selected;
+    var opt = OPTIONS.filter(function (o) { return o.key === key; })[0];
+
+    if (opt.correct) {
+      finished = true;
+      refresh();
+      mark(key, 'right');
+      actionsEl.style.display = 'none';
+      showFeedback(
+        solutionPanel('Yes! ' + frac(7, 12), 'You made both fractions the same size pieces first, then added the tops.') +
+        '<div class="teacher"><p><strong>Correct.</strong> Student chose A (7/12) and showed the intended path: common denominator, convert both numerators, add numerators only.</p></div>'
+      );
+      document.getElementById('restart').addEventListener('click', reset);
+    } else {
+      var f = FEEDBACK[key];
+      eliminated[key] = true;
+      selected = null;
+      refresh();
+      mark(key, 'wrong');
+      showFeedback(
+        '<div class="panel warn">' +
+          '<h2>' + f.title + '</h2>' +
+          '<p>' + f.body + '</p>' +
+          '<p class="try">' + f.tryIt + '</p>' +
+          '<p class="check">' + f.check + '</p>' +
+          teacherHTML(f.teacher) +
+          '<div class="actions">' +
+            '<button type="button" id="again">Try again</button>' +
+            '<button type="button" class="secondary" id="reveal">Show the solution</button>' +
+          '</div>' +
+        '</div>'
+      );
+      document.getElementById('again').addEventListener('click', tryAgain);
+      document.getElementById('reveal').addEventListener('click', reveal);
+    }
+  }
+
+  function tryAgain() {
+    selected = null;
+    feedbackEl.innerHTML = '';
+    refresh();
+    var first = choicesEl.querySelector('.choice:not(.out) input');
+    if (first) first.focus();
+  }
+
+  function reveal() {
+    finished = true;
+    selected = null;
+    refresh();
+    mark('A', 'right');
+    actionsEl.style.display = 'none';
+    showFeedback(solutionPanel('Here\u2019s the solution: ' + frac(7, 12), 'Follow the steps, then try a similar problem on your own.'));
+    document.getElementById('restart').addEventListener('click', reset);
+  }
+
+  function reset() {
+    selected = null;
+    eliminated = {};
+    finished = false;
+    feedbackEl.innerHTML = '';
+    actionsEl.style.display = '';
+    buildChoices();
+    refresh();
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
+
+  choicesEl.addEventListener('change', function (e) {
+    if (e.target && e.target.name === 'answer') {
+      selected = e.target.value;
+      refresh();
+    }
+  });
+  submitBtn.addEventListener('click', submit);
+  teacherToggle.addEventListener('change', function () {
+    document.body.classList.toggle('teacher-on', teacherToggle.checked);
+  });
+
+  buildChoices();
+  refresh();
+})();
+</script>
+</body>
+</html>
